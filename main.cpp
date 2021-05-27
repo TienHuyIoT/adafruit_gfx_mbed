@@ -29,10 +29,10 @@ const PinMapSPI PinMap_SPI[1] = {
     { TFT_MOSI, TFT_MISO, TFT_SCLK, 3 }
 };
 
-SPI tftspi(TFT_MOSI, TFT_MISO, TFT_SCLK, TFT_CS); // mosi, miso, sclk
+SPI tftspi(TFT_MOSI, TFT_MISO, TFT_SCLK); // mosi, miso, sclk
 
 // Initialize Adafruit ST7789 TFT library
-Adafruit_ST7789 tft = Adafruit_ST7789(&tftspi, NC, TFT_DC, TFT_RST);
+Adafruit_ST7789 tft = Adafruit_ST7789(&tftspi, TFT_CS, TFT_DC, TFT_RST);
 // Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK,
 // TFT_RST);
 
@@ -71,35 +71,35 @@ void testlines(uint16_t color) {
     // ThisThread::sleep_for(0);
   }
 
-  tft.fillScreen(ST77XX_BLACK);
-  for (int16_t x = 0; x < tft.width(); x += 6) {
-    tft.drawLine(tft.width() - 1, 0, x, tft.height() - 1, color);
-    // ThisThread::sleep_for(0);
-  }
-  for (int16_t y = 0; y < tft.height(); y += 6) {
-    tft.drawLine(tft.width() - 1, 0, 0, y, color);
-    // ThisThread::sleep_for(0);
-  }
+//   tft.fillScreen(ST77XX_BLACK);
+//   for (int16_t x = 0; x < tft.width(); x += 6) {
+//     tft.drawLine(tft.width() - 1, 0, x, tft.height() - 1, color);
+//     // ThisThread::sleep_for(0);
+//   }
+//   for (int16_t y = 0; y < tft.height(); y += 6) {
+//     tft.drawLine(tft.width() - 1, 0, 0, y, color);
+//     // ThisThread::sleep_for(0);
+//   }
 
-  tft.fillScreen(ST77XX_BLACK);
-  for (int16_t x = 0; x < tft.width(); x += 6) {
-    tft.drawLine(0, tft.height() - 1, x, 0, color);
-    // ThisThread::sleep_for(0);
-  }
-  for (int16_t y = 0; y < tft.height(); y += 6) {
-    tft.drawLine(0, tft.height() - 1, tft.width() - 1, y, color);
-    // ThisThread::sleep_for(0);
-  }
+//   tft.fillScreen(ST77XX_BLACK);
+//   for (int16_t x = 0; x < tft.width(); x += 6) {
+//     tft.drawLine(0, tft.height() - 1, x, 0, color);
+//     // ThisThread::sleep_for(0);
+//   }
+//   for (int16_t y = 0; y < tft.height(); y += 6) {
+//     tft.drawLine(0, tft.height() - 1, tft.width() - 1, y, color);
+//     // ThisThread::sleep_for(0);
+//   }
 
-  tft.fillScreen(ST77XX_BLACK);
-  for (int16_t x = 0; x < tft.width(); x += 6) {
-    tft.drawLine(tft.width() - 1, tft.height() - 1, x, 0, color);
-    // ThisThread::sleep_for(0);
-  }
-  for (int16_t y = 0; y < tft.height(); y += 6) {
-    tft.drawLine(tft.width() - 1, tft.height() - 1, 0, y, color);
-    // ThisThread::sleep_for(0);
-  }
+//   tft.fillScreen(ST77XX_BLACK);
+//   for (int16_t x = 0; x < tft.width(); x += 6) {
+//     tft.drawLine(tft.width() - 1, tft.height() - 1, x, 0, color);
+//     // ThisThread::sleep_for(0);
+//   }
+//   for (int16_t y = 0; y < tft.height(); y += 6) {
+//     tft.drawLine(tft.width() - 1, tft.height() - 1, 0, y, color);
+//     // ThisThread::sleep_for(0);
+//   }
 }
 
 void testdrawtext(char *text, uint16_t color) {
@@ -208,7 +208,7 @@ void tftPrintTest() {
   tft.setTextColor(ST77XX_BLUE);
   tft.setTextSize(4);
   tft.print(1234.567);
-  ThisThread::sleep_for(1500ms);
+  ThisThread::sleep_for(500ms);
   tft.setCursor(0, 0);
   tft.fillScreen(ST77XX_BLACK);
   tft.setTextColor(ST77XX_WHITE);
@@ -257,27 +257,27 @@ void tft_setup(void) {
 
   MAIN_TAG_DBG("Hello! ST77xx TFT Test");
 
-  tftspi.frequency(16E6);
-  tftspi.format(8, 0);
+//   tftspi.frequency(32E6);
+//   tftspi.format(8, 0);
   // highspeed SPIM should set SCK and MOSI to high drive
-    nrf_gpio_cfg(TFT_SCLK,
-                NRF_GPIO_PIN_DIR_OUTPUT,
-                NRF_GPIO_PIN_INPUT_CONNECT,
-                NRF_GPIO_PIN_NOPULL,
-                NRF_GPIO_PIN_H0H1,
-                NRF_GPIO_PIN_NOSENSE);
+    // nrf_gpio_cfg(TFT_SCLK,
+    //             NRF_GPIO_PIN_DIR_OUTPUT,
+    //             NRF_GPIO_PIN_INPUT_CONNECT,
+    //             NRF_GPIO_PIN_NOPULL,
+    //             NRF_GPIO_PIN_H0H1,
+    //             NRF_GPIO_PIN_NOSENSE);
 
-    nrf_gpio_cfg(TFT_MOSI,
-                NRF_GPIO_PIN_DIR_OUTPUT,
-                NRF_GPIO_PIN_INPUT_DISCONNECT,
-                NRF_GPIO_PIN_NOPULL,
-                NRF_GPIO_PIN_H0H1,
-                NRF_GPIO_PIN_NOSENSE);
+    // nrf_gpio_cfg(TFT_MOSI,
+    //             NRF_GPIO_PIN_DIR_OUTPUT,
+    //             NRF_GPIO_PIN_INPUT_DISCONNECT,
+    //             NRF_GPIO_PIN_NOPULL,
+    //             NRF_GPIO_PIN_H0H1,
+    //             NRF_GPIO_PIN_NOSENSE);
   // if the display has CS pin try with SPI_MODE0
   tft.init(240, 240, 0); // Init ST7789 display 240x240 pixel
   // tft.setSPISpeed(32E6); // Init SPI speed
 
-  ThisThread::sleep_for(10ms);
+  ThisThread::sleep_for(20ms);
 
   // if the screen is flipped, remove this command
   tft.setRotation(2);

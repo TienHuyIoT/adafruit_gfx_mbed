@@ -23,6 +23,9 @@
 #if !defined(__AVR_ATtiny85__) // Not for ATtiny, at all
 
 #include "Adafruit_GFX.h"
+#include "SPIMode.h"
+#include "wiring_digital.h"
+#include "wiring_constants.h"
 #if defined(ARDUINO)
 #include <SPI.h>
 #endif
@@ -325,7 +328,8 @@ public:
     #if defined(ARDUINO)            
     digitalWrite(_cs, HIGH);
     #elif defined(__MBED__)         
-    DigitalOut(_cs, 1);
+    // DigitalOut(_cs, 1);
+    digitalWrite(_cs, HIGH);
     #endif                          
 #endif // end !USE_FAST_PINIO
   }
@@ -351,7 +355,8 @@ public:
     #if defined(ARDUINO)                
     digitalWrite(_cs, LOW);
     #elif defined(__MBED__)             
-    DigitalOut(_cs, 0);
+    // DigitalOut(_cs, 0);
+    digitalWrite(_cs, LOW);
     #endif                              
 #endif // end !USE_FAST_PINIO
   }
@@ -374,7 +379,8 @@ public:
     #if defined(ARDUINO)            
     digitalWrite(_dc, HIGH);
     #elif defined(__MBED__)         
-    DigitalOut(_dc, 1);
+    // DigitalOut(_dc, 1);
+    digitalWrite(_dc, HIGH);
     #endif                          
 #endif // end !USE_FAST_PINIO
   }
@@ -397,7 +403,8 @@ public:
     #if defined(ARDUINO)            
     digitalWrite(_dc, LOW);
     #elif defined(__MBED__)         
-    DigitalOut(_dc, 0);
+    // DigitalOut(_dc, 0);
+    digitalWrite(_dc, LOW);
     #endif                          
 #endif // end !USE_FAST_PINIO
   }
@@ -445,6 +452,7 @@ protected:
       #if defined(ARDUINO)                          
       SPIClass *_spi; ///< SPI class pointer
       #elif defined(__MBED__)
+      SPIClass *_spimode; ///< SPI class pointer
       SPI *_spi;
       #endif
 #if defined(SPI_HAS_TRANSACTION)

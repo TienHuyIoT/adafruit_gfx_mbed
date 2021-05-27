@@ -30,7 +30,7 @@
 #elif defined(__MBED__)
 #include "mbed.h"
 #endif
-#include "Print.h"
+// #include "Print.h"
 #include <Adafruit_GFX.h>
 #include <Adafruit_SPITFT.h>
 #include <Adafruit_SPITFT_Macros.h>

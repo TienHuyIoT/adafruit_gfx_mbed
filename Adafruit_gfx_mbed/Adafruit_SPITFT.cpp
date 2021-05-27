@@ -35,6 +35,8 @@
 
 #include "Adafruit_SPITFT.h"
 #include "console_dbg.h"
+#include "wiring_digital.h"
+#include "wiring_constants.h"
 
 #define SPIFTFT_TAG_DBG(...) CONSOLE_TAG_LOGI("[SPITFT]", __VA_ARGS__)
 #define SPIFTFT_DBG(...) CONSOLE_LOGI(__VA_ARGS__)
@@ -43,6 +45,7 @@
 // however instanciation of SPI is needed in Mbed (not done automatically like in Arduino's SPI.cpp)
 #if defined (__MBED__)
 SPI static myspi(SPI_PSELMOSI0, SPI_PSELMISO0, SPI_PSELSCK0); //Bankuti SUPER IMPORTANT LINE!
+// uint16_t tft_buffer[240 * 2];
 #endif
 
 #if defined(__AVR__)
@@ -326,6 +329,7 @@ Adafruit_SPITFT::Adafruit_SPITFT(uint16_t w, uint16_t h, SPI *spiClass,
     : Adafruit_GFX(w, h), connection(TFT_HARD_SPI), _rst(rst), _cs(cs),
       _dc(dc) {
 #endif
+    hwspi._spimode = &SPIMode;
   hwspi._spi = spiClass;
   SPIFTFT_TAG_DBG("Register spi class");
 #if defined(USE_FAST_PINIO)
@@ -593,9 +597,15 @@ void Adafruit_SPITFT::initSPI(uint32_t freq, uint8_t spiMode) {
   digitalWrite(_dc, HIGH); // Data mode
   #elif defined(__MBED__)
   if (_cs != NC) {
-    DigitalOut(_cs, 1);
+    // DigitalOut(_cs, 1);
+
+    pinMode(_cs, OUTPUT);
+    digitalWrite(_cs, HIGH); // Deselect
   }
-  DigitalOut(_dc, 1);
+  // DigitalOut(_dc, 1);
+
+  pinMode(_dc, OUTPUT);
+  digitalWrite(_dc, HIGH); // Data mode
   #endif    
   
 
@@ -607,7 +617,7 @@ void Adafruit_SPITFT::initSPI(uint32_t freq, uint8_t spiMode) {
     hwspi._freq = freq; // Save freq value for later
 #endif
     hwspi._mode = spiMode; // Save spiMode value for later
-    SPIFTFT_TAG_DBG("freq %u, mode %u", hwspi._freq, hwspi._mode);
+    SPIFTFT_TAG_DBG("freq %u, mode %u", freq, hwspi._mode);
 
     // Call hwspi._spi->begin() ONLY if this is among the 'established'
     // SPI interfaces in variant.h. For DIY roll-your-own SERCOM SPIs,
@@ -626,7 +636,7 @@ void Adafruit_SPITFT::initSPI(uint32_t freq, uint8_t spiMode) {
         1
 #endif
 #if SPI_INTERFACES_COUNT > 0
-        (hwspi._spi == &SPI)
+        (hwspi._spimode == &SPIMode)
 #endif
 #if SPI_INTERFACES_COUNT > 1
         || (hwspi._spi == &SPI1)
@@ -644,8 +654,9 @@ void Adafruit_SPITFT::initSPI(uint32_t freq, uint8_t spiMode) {
         || (hwspi._spi == &SPI5)
 #endif
     ) {
-      #if defined(ARDUINO)
-      hwspi._spi->begin();
+      #if defined(ARDUINO) || defined(__MBED__)
+      SPIFTFT_TAG_DBG("Begin SPI");
+      hwspi._spimode->begin();
       #endif
     }
   } else if (connection == TFT_SOFT_SPI) {
@@ -1092,7 +1103,8 @@ void Adafruit_SPITFT::writePixels(uint16_t *colors, uint32_t len, bool block,
   }
 
   // use the separate tx, rx buf variant to prevent overwrite the buffer
-  hwspi._spi->write((const char*)colors, 2 * len, nullptr, 0);
+  // hwspi._spi->write((const char*)colors, 2 * len, nullptr, 0);
+  hwspi._spimode->transfer(colors, NULL, 2 * len);
 
   // swap back color buffer
   if (!bigEndian) {
@@ -1280,10 +1292,11 @@ void Adafruit_SPITFT::writeColor(uint16_t color, uint32_t len) {
 #elif defined(__MBED__) &&                                       \
     defined(NRF52840_XXAA) // Adafruit nRF52840 use SPIM3 DMA at 32Mhz
   // at most 2 scan lines
-  uint32_t const pixbufcount = min(len, ((uint32_t)2 * width()));
+  uint32_t const pixbufcount = min(len, ((uint32_t)10 * width()));
   // uint16_t *pixbuf = (uint16_t *)rtos_malloc(2 * pixbufcount);
   /* Allocate dynamic memory */
   uint16_t *pixbuf = new (std::nothrow) uint16_t[pixbufcount];
+  // uint16_t *pixbuf = tft_buffer;
 
   // use SPI3 DMA if we could allocate buffer, else fall back to writing each
   // pixel loop below
@@ -1445,9 +1458,12 @@ void Adafruit_SPITFT::writeColor(uint16_t color, uint32_t len) {
 #if defined(__AVR__)
       AVR_WRITESPI(hi);
       AVR_WRITESPI(lo);
-#elif defined(ESP32) || defined(__MBED__)
+#elif defined(ESP32)
       hwspi._spi->write(hi);
       hwspi._spi->write(lo);
+#elif defined(__MBED__)
+      hwspi._spimode->transfer(hi);
+      hwspi._spimode->transfer(lo);
 #else
       hwspi._spi->transfer(hi);
       hwspi._spi->transfer(lo);
@@ -2145,7 +2161,11 @@ uint16_t Adafruit_SPITFT::readcommand16(uint16_t addr) {
 inline void Adafruit_SPITFT::SPI_BEGIN_TRANSACTION(void) {
   if (connection == TFT_HARD_SPI) {
 #if defined(SPI_HAS_TRANSACTION)
+#if defined(__MBED__)  
+    hwspi._spimode->beginTransaction(hwspi.settings);
+#elif
     hwspi._spi->beginTransaction(hwspi.settings);
+#endif
 #else // No transactions, configure SPI manually...
 #if defined(ARDUINO)
 #if defined(__AVR__) || defined(TEENSYDUINO) || defined(ARDUINO_ARCH_STM32F1)
@@ -2162,7 +2182,7 @@ inline void Adafruit_SPITFT::SPI_BEGIN_TRANSACTION(void) {
 #elif defined(__MBED__)                         //Bankuti
     // hwspi._spi->format(8, hwspi._mode);
     // hwspi._spi->frequency(hwspi._freq);
-    // hwspi._spi->beginTransaction();
+    hwspi._spi->beginTransaction();
     // SPIFTFT_TAG_DBG("Init SPI %u %u", hwspi._mode, hwspi._freq);
 #endif
 #endif // end !SPI_HAS_TRANSACTION
@@ -2179,7 +2199,7 @@ inline void Adafruit_SPITFT::SPI_BEGIN_TRANSACTION(void) {
 */
 inline void Adafruit_SPITFT::SPI_END_TRANSACTION(void) {
 #if defined(__MBED__)
-  // hwspi._spi->endTransaction();
+  hwspi._spimode->endTransaction();
 #endif
 #if defined(SPI_HAS_TRANSACTION)
   if (connection == TFT_HARD_SPI) {
@@ -2201,10 +2221,13 @@ void Adafruit_SPITFT::spiWrite(uint8_t b) {
   if (connection == TFT_HARD_SPI) {
 #if defined(__AVR__)
     AVR_WRITESPI(b);
-#elif defined(ESP8266) || defined(ESP32) || defined(__MBED__)       //Bankuti
+#elif defined(ESP8266) || defined(ESP32)      //Bankuti
     hwspi._spi->write(b);
+    
+#elif defined(__MBED__) 
     // hwspi._spi->write((const char*)&b, 1, nullptr, 0);
-#else
+    hwspi._spimode->transfer(b);
+#elif 
     hwspi._spi->transfer(b);
 #endif
   } else if (connection == TFT_SOFT_SPI) {
@@ -2261,7 +2284,7 @@ uint8_t Adafruit_SPITFT::spiRead(void) {
     #if defined(ARDUINO)    
     return hwspi._spi->transfer((uint8_t)0);      
     #elif defined(__MBED__)
-    return hwspi._spi->write((uint8_t)0);
+    return hwspi._spimode->transfer((uint8_t)0);
     #endif  
   } else if (connection == TFT_SOFT_SPI) {
     if (swspi._miso >= 0 || swspi._miso != NC) {
@@ -2539,9 +2562,10 @@ void Adafruit_SPITFT::SPI_WRITE16(uint16_t w) {
     #elif defined(__MBED__)
     // hwspi._spi->write(w >> 8);
     // hwspi._spi->write(w);
-    w = __builtin_bswap16(w);
-    hwspi._spi->write((const char*)&w, 2, nullptr, 0);
-    
+    // w = __builtin_bswap16(w);
+    // hwspi._spi->write((const char*)&w, 2, nullptr, 0);
+    hwspi._spimode->transfer(w >> 8);
+    hwspi._spimode->transfer(w);
     #endif                          
 #endif
   } else if (connection == TFT_SOFT_SPI) {
@@ -2602,8 +2626,12 @@ void Adafruit_SPITFT::SPI_WRITE32(uint32_t l) {
     // hwspi._spi->write(l >> 16);
     // hwspi._spi->write(l >> 8);
     // hwspi._spi->write(l);
-    l = __builtin_bswap32(l);
-    hwspi._spi->write((const char*)&l, 4, nullptr, 0);
+    // l = __builtin_bswap32(l);
+    // hwspi._spi->write((const char*)&l, 4, nullptr, 0);
+    hwspi._spimode->transfer(l >> 24);
+    hwspi._spimode->transfer(l >> 16);
+    hwspi._spimode->transfer(l >> 8);
+    hwspi._spimode->transfer(l);
     #endif                          
 #endif
   } else if (connection == TFT_SOFT_SPI) {
