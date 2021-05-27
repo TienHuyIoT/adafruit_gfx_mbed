@@ -11,6 +11,7 @@
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 #include <SPI.h>             // Arduino SPI library
+#include <pinmap_ex.h>
 
 Timer t_system;
 
@@ -24,10 +25,14 @@ Timer t_system;
 #define TFT_MOSI p16 // set these to be whatever pins you like!
 #define TFT_MISO p42 // set these to be whatever pins you like!
 
-SPI tftspi(TFT_MOSI, TFT_MISO, TFT_SCLK); // mosi, miso, sclk
+const PinMapSPI PinMap_SPI[1] = {
+    { TFT_MOSI, TFT_MISO, TFT_SCLK, 3 }
+};
+
+SPI tftspi(TFT_MOSI, TFT_MISO, TFT_SCLK, TFT_CS); // mosi, miso, sclk
 
 // Initialize Adafruit ST7789 TFT library
-Adafruit_ST7789 tft = Adafruit_ST7789(&tftspi, TFT_CS, TFT_DC, TFT_RST);
+Adafruit_ST7789 tft = Adafruit_ST7789(&tftspi, NC, TFT_DC, TFT_RST);
 // Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK,
 // TFT_RST);
 
@@ -248,15 +253,29 @@ void mediabuttons() {
 }
 
 void tft_setup(void) {
-  aw9364_init(5);
-
-  // tftspi.format(8, 0);
-  // tftspi.frequency(32000000);
+  aw9364_init(10);  
 
   MAIN_TAG_DBG("Hello! ST77xx TFT Test");
 
+  tftspi.frequency(16E6);
+  tftspi.format(8, 0);
+  // highspeed SPIM should set SCK and MOSI to high drive
+    nrf_gpio_cfg(TFT_SCLK,
+                NRF_GPIO_PIN_DIR_OUTPUT,
+                NRF_GPIO_PIN_INPUT_CONNECT,
+                NRF_GPIO_PIN_NOPULL,
+                NRF_GPIO_PIN_H0H1,
+                NRF_GPIO_PIN_NOSENSE);
+
+    nrf_gpio_cfg(TFT_MOSI,
+                NRF_GPIO_PIN_DIR_OUTPUT,
+                NRF_GPIO_PIN_INPUT_DISCONNECT,
+                NRF_GPIO_PIN_NOPULL,
+                NRF_GPIO_PIN_H0H1,
+                NRF_GPIO_PIN_NOSENSE);
   // if the display has CS pin try with SPI_MODE0
   tft.init(240, 240, 0); // Init ST7789 display 240x240 pixel
+  // tft.setSPISpeed(32E6); // Init SPI speed
 
   ThisThread::sleep_for(10ms);
 
