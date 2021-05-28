@@ -1005,7 +1005,7 @@ void Adafruit_SPITFT::writePixels(uint16_t *colors, uint32_t len, bool block,
   }
 
   // use the separate tx, rx buf variant to prevent overwrite the buffer
-  hwspi._spi->transfer(colors, NULL, 2 * len);
+  hwspi._spi->transfer(colors, nullptr, 2 * len);
 
   // swap back color buffer
   if (!bigEndian) {
@@ -2367,8 +2367,10 @@ void Adafruit_SPITFT::SPI_WRITE16(uint16_t w) {
 #elif defined(ESP8266) || defined(ESP32)
     hwspi._spi->write16(w);
 #else
-    hwspi._spi->transfer(w >> 8);
-    hwspi._spi->transfer(w);
+    // hwspi._spi->transfer(w >> 8);
+    // hwspi._spi->transfer(w);
+    w = __builtin_bswap16(w);
+    hwspi._spi->transfer(&w, nullptr, 2);
 #endif
   } else if (connection == TFT_SOFT_SPI) {
     for (uint8_t bit = 0; bit < 16; bit++) {
@@ -2418,10 +2420,12 @@ void Adafruit_SPITFT::SPI_WRITE32(uint32_t l) {
 #elif defined(ESP8266) || defined(ESP32)
     hwspi._spi->write32(l);
 #else
-    hwspi._spi->transfer(l >> 24);
-    hwspi._spi->transfer(l >> 16);
-    hwspi._spi->transfer(l >> 8);
-    hwspi._spi->transfer(l);
+    // hwspi._spi->transfer(l >> 24);
+    // hwspi._spi->transfer(l >> 16);
+    // hwspi._spi->transfer(l >> 8);
+    // hwspi._spi->transfer(l);
+    l = __builtin_bswap32(l);
+    hwspi._spi->transfer(&l, nullptr, 4);
 #endif
   } else if (connection == TFT_SOFT_SPI) {
     for (uint8_t bit = 0; bit < 32; bit++) {
