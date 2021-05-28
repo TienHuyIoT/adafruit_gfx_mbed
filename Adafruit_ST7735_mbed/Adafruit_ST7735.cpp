@@ -11,30 +11,20 @@
     @param  sclk  SPI Clock pin #
     @param  rst   Reset pin # (optional, pass -1 if unused)
 */
-#if defined(ARDUINO)
 Adafruit_ST7735::Adafruit_ST7735(int8_t cs, int8_t dc, int8_t mosi, int8_t sclk,
                                  int8_t rst)
     : Adafruit_ST77xx(ST7735_TFTWIDTH_128, ST7735_TFTHEIGHT_160, cs, dc, mosi,
                       sclk, rst) {}
-#elif defined(__MBED__)
-Adafruit_ST7735::Adafruit_ST7735(PinName cs, PinName dc, PinName mosi, PinName sclk,
-                                 PinName rst)
-    : Adafruit_ST77xx(ST7735_TFTWIDTH_128, ST7735_TFTHEIGHT_160, cs, dc, mosi,
-                      sclk, rst) {}
-#endif
+
 /*!
     @brief  Instantiate Adafruit ST7735 driver with default hardware SPI
     @param  cs   Chip select pin #
     @param  dc   Data/Command pin #
     @param  rst  Reset pin # (optional, pass -1 if unused)
 */
-#if defined(ARDUINO)
 Adafruit_ST7735::Adafruit_ST7735(int8_t cs, int8_t dc, int8_t rst)
     : Adafruit_ST77xx(ST7735_TFTWIDTH_128, ST7735_TFTHEIGHT_160, cs, dc, rst) {}
-#elif defined(__MBED__)
-Adafruit_ST7735::Adafruit_ST7735(PinName cs, PinName dc, PinName rst)
-    : Adafruit_ST77xx(ST7735_TFTWIDTH_128, ST7735_TFTHEIGHT_160, cs, dc, rst) {}
-#endif
+
 #if !defined(ESP8266)
 /*!
     @brief  Instantiate Adafruit ST7735 driver with selectable hardware SPI
@@ -43,17 +33,10 @@ Adafruit_ST7735::Adafruit_ST7735(PinName cs, PinName dc, PinName rst)
     @param  dc        Data/Command pin #
     @param  rst       Reset pin # (optional, pass -1 if unused)
 */
-#if defined(ARDUINO)
 Adafruit_ST7735::Adafruit_ST7735(SPIClass *spiClass, int8_t cs, int8_t dc,
                                  int8_t rst)
     : Adafruit_ST77xx(ST7735_TFTWIDTH_128, ST7735_TFTHEIGHT_160, spiClass, cs,
                       dc, rst) {}
-#elif defined(__MBED__)
-Adafruit_ST7735::Adafruit_ST7735(SPI *spiClass, PinName cs, PinName dc,
-                                 PinName rst)
-    : Adafruit_ST77xx(ST7735_TFTWIDTH_128, ST7735_TFTHEIGHT_160, spiClass, cs,
-                      dc, rst) {}
-#endif
 #endif // end !ESP8266
 
 // SCREEN INITIALIZATION ***************************************************

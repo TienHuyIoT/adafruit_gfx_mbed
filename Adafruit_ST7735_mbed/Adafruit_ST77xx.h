@@ -30,10 +30,9 @@
 #elif defined(__MBED__)
 #include "mbed.h"
 #endif
-// #include "Print.h"
-#include <Adafruit_GFX.h>
-#include <Adafruit_SPITFT.h>
-#include <Adafruit_SPITFT_Macros.h>
+#include "Adafruit_GFX.h"
+#include "Adafruit_SPITFT.h"
+#include "Adafruit_SPITFT_Macros.h"
 
 #define ST7735_TFTWIDTH_128 128  // for 1.44 and mini
 #define ST7735_TFTWIDTH_80 80    // for mini
@@ -92,25 +91,13 @@
 /// Subclass of SPITFT for ST77xx displays (lots in common!)
 class Adafruit_ST77xx : public Adafruit_SPITFT {
 public:
-#if defined(ARDUINO)
   Adafruit_ST77xx(uint16_t w, uint16_t h, int8_t _CS, int8_t _DC, int8_t _MOSI,
                   int8_t _SCLK, int8_t _RST = -1, int8_t _MISO = -1);
   Adafruit_ST77xx(uint16_t w, uint16_t h, int8_t CS, int8_t RS,
                   int8_t RST = -1);
-#elif defined(__MBED__)
-  Adafruit_ST77xx(uint16_t w, uint16_t h, PinName _CS, PinName _DC, PinName _MOSI,
-                  PinName _SCLK, PinName _RST = NC, PinName _MISO = NC);
-  Adafruit_ST77xx(uint16_t w, uint16_t h, PinName CS, PinName RS,
-                  PinName RST = NC);
-#endif
 #if !defined(ESP8266)
-#if defined(ARDUINO)
   Adafruit_ST77xx(uint16_t w, uint16_t h, SPIClass *spiClass, int8_t CS,
                   int8_t RS, int8_t RST = -1);
-#elif defined(__MBED__)
-  Adafruit_ST77xx(uint16_t w, uint16_t h, SPI *spiClass, PinName CS,
-                  PinName RS, PinName RST = NC);
-#endif
 #endif // end !ESP8266
 
   void setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
@@ -122,7 +109,7 @@ public:
 protected:
   uint8_t _colstart = 0,   ///< Some displays need this changed to offset
       _rowstart = 0,       ///< Some displays need this changed to offset
-      spiMode = 0; ///< Certain display needs MODE3 instead
+      spiMode = SPI_MODE0; ///< Certain display needs MODE3 instead
 
   void begin(uint32_t freq = 0);
   void commonInit(const uint8_t *cmdList);

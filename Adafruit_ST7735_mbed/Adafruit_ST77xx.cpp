@@ -23,6 +23,7 @@
  **************************************************************************/
 
 #include "Adafruit_ST77xx.h"
+#include <limits.h>
 #include <chrono>
 #include <cstdint>
 #include <ratio>
@@ -35,6 +36,7 @@
 #include <SPI.h>
 #elif defined(__MBED__)
 #include "pgmspace.h"
+#include "SPIMode.h"
 #endif
 
 #define SPI_DEFAULT_FREQ 32000000 ///< Default SPI data clock frequency
@@ -52,17 +54,11 @@
     @param  miso  SPI MISO pin # (optional, pass -1 if unused)
 */
 /**************************************************************************/
-#if defined(ARDUINO)
 Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
                                  int8_t mosi, int8_t sclk, int8_t rst,
                                  int8_t miso)
     : Adafruit_SPITFT(w, h, cs, dc, mosi, sclk, rst, miso) {}
-#elif defined(__MBED__)
-Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, PinName cs, PinName dc,
-                                 PinName mosi, PinName sclk, PinName rst,
-                                 PinName miso)
-    : Adafruit_SPITFT(w, h, cs, dc, mosi, sclk, rst, miso) {}
-#endif
+
 /**************************************************************************/
 /*!
     @brief  Instantiate Adafruit ST77XX driver with hardware SPI
@@ -73,15 +69,10 @@ Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, PinName cs, PinName dc,
     @param  rst   Reset pin # (optional, pass -1 if unused)
 */
 /**************************************************************************/
-#if defined(ARDUINO)
 Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
                                  int8_t rst)
     : Adafruit_SPITFT(w, h, cs, dc, rst) {}
-#elif defined(__MBED__)
-Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, PinName cs, PinName dc,
-                                 PinName rst)
-    : Adafruit_SPITFT(w, h, cs, dc, rst) {}
-#endif
+
 #if !defined(ESP8266)
 /**************************************************************************/
 /*!
@@ -94,15 +85,9 @@ Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, PinName cs, PinName dc,
     @param  rst   Reset pin # (optional, pass -1 if unused)
 */
 /**************************************************************************/
-#if defined(ARDUINO)
 Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, SPIClass *spiClass,
                                  int8_t cs, int8_t dc, int8_t rst)
     : Adafruit_SPITFT(w, h, spiClass, cs, dc, rst) {}
-#elif defined(__MBED__)
-Adafruit_ST77xx::Adafruit_ST77xx(uint16_t w, uint16_t h, SPI *spiClass,
-                                 PinName cs, PinName dc, PinName rst)
-    : Adafruit_SPITFT(w, h, spiClass, cs, dc, rst) {}
-#endif
 #endif // end !ESP8266
 
 /**************************************************************************/
@@ -130,11 +115,7 @@ void Adafruit_ST77xx::displayInit(const uint8_t *addr) {
       ms = pgm_read_byte(addr++); // Read post-command delay time (ms)
       if (ms == 255)
         ms = 500; // If 255, delay for 500 ms
-#if defined(ARDUINO)
-      delay(ms);
-#elif defined(__MBED__)
       ThisThread::sleep_for(std::chrono::milliseconds(ms));
-#endif
     }
   }
 }
@@ -147,11 +128,10 @@ void Adafruit_ST77xx::displayInit(const uint8_t *addr) {
 */
 /**************************************************************************/
 void Adafruit_ST77xx::begin(uint32_t freq) {
-  if (!freq) {
-    freq = SPI_DEFAULT_FREQ;
-  }
-  _freq = freq;
 
+  if (!freq) {
+      freq = SPI_DEFAULT_FREQ;
+  }
   invertOnCommand = ST77XX_INVON;
   invertOffCommand = ST77XX_INVOFF;
 

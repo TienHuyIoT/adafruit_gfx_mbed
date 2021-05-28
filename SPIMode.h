@@ -24,20 +24,7 @@
 #include "nrfx_spim.h"
 
 #include "wiring_constants.h"
-
-/*
- * SPI Interfaces
- */
-#define SPI_INTERFACES_COUNT 1
-
-#define PIN_SPI_MISO         (42)
-#define PIN_SPI_MOSI         (16)
-#define PIN_SPI_SCK          (14)
-
-static const uint8_t SS   = 17 ;
-static const uint8_t MOSI = PIN_SPI_MOSI ;
-static const uint8_t MISO = PIN_SPI_MISO ;
-static const uint8_t SCK  = PIN_SPI_SCK ;
+#include "variant.h"
 
 // SPI_HAS_TRANSACTION means SPI has
 //   - beginTransaction()
@@ -50,12 +37,6 @@ static const uint8_t SCK  = PIN_SPI_SCK ;
 #define SPI_MODE1 0x01
 #define SPI_MODE2 0x02
 #define SPI_MODE3 0x03
-
-// enum BitOrder {
-// 	LSBFIRST = 0,
-// 	MSBFIRST = 1
-// };
-
 
 class SPISettings {
   public:

@@ -23,12 +23,10 @@
 #if !defined(__AVR_ATtiny85__) // Not for ATtiny, at all
 
 #include "Adafruit_GFX.h"
-#include "SPIMode.h"
+#include "console_dbg.h"
 #include "wiring_digital.h"
 #include "wiring_constants.h"
-#if defined(ARDUINO)
-#include <SPI.h>
-#endif
+#include "SPIMode.h"
 
 // HARDWARE CONFIG ---------------------------------------------------------
 
@@ -76,7 +74,8 @@ typedef volatile ADAGFX_PORT_t *PORTreg_t; ///< PORT register type
 #define DEFAULT_SPI_FREQ 16000000L ///< Hardware SPI default speed
 #endif
 
-#if defined(ADAFRUIT_PYPORTAL) || defined(ADAFRUIT_PYBADGE_M4_EXPRESS) ||      \
+#if defined(ADAFRUIT_PYPORTAL) || defined(ADAFRUIT_PYPORTAL_M4_TITANO) ||      \
+    defined(ADAFRUIT_PYBADGE_M4_EXPRESS) ||                                    \
     defined(ADAFRUIT_PYGAMER_M4_EXPRESS) ||                                    \
     defined(ADAFRUIT_MONSTER_M4SK_EXPRESS) || defined(NRF52_SERIES) ||         \
     defined(ADAFRUIT_CIRCUITPLAYGROUND_M0)
@@ -131,41 +130,23 @@ public:
   // (reset, miso). cs argument is required but can be -1 if unused --
   // rather than moving it to the optional arguments, it was done this way
   // to avoid breaking existing code (-1 option was a later addition).
-  // While Arduino uses pin numbers, Mbed uses PinNames instead. int8_t rst = -1 in Arduino is the same as PinName rst = NC in Mbed (NC means Not Connected)
-  #if defined(ARDUINO)
   Adafruit_SPITFT(uint16_t w, uint16_t h, int8_t cs, int8_t dc, int8_t mosi,
                   int8_t sck, int8_t rst = -1, int8_t miso = -1);
-  #elif defined(__MBED__)
-  Adafruit_SPITFT(uint16_t w, uint16_t h, PinName cs, PinName dc, PinName mosi,
-                  PinName sck, PinName rst = NC, PinName miso = NC);
-  #endif
 
   // Hardware SPI constructor using the default SPI port: expects width &
   // height (at default rotation setting 0), 2 signal pins (cs, dc),
   // optional reset pin. cs is required but can be -1 if unused -- rather
   // than moving it to the optional arguments, it was done this way to
   // avoid breaking existing code (-1 option was a later addition).
-  // While Arduino uses pin numbers, Mbed uses PinNames instead. int8_t rst = -1 in Arduino is the same as PinName rst = NC in Mbed (NC means Not Connected)
-  #if defined(ARDUINO)
   Adafruit_SPITFT(uint16_t w, uint16_t h, int8_t cs, int8_t dc,
                   int8_t rst = -1);
-  #elif defined(__MBED__)
-  Adafruit_SPITFT(uint16_t w, uint16_t h, PinName cs, PinName dc,
-                  PinName rst = NC);
-  #endif
 
-#if !defined(ESP8266) // See notes in .cpp: ESP8266 compiler freaks out at this constructor. Solution here is to just not offer this variant on the ESP8266
+#if !defined(ESP8266) // See notes in .cpp
   // Hardware SPI constructor using an arbitrary SPI peripheral: expects
   // width & height (rotation 0), SPIClass pointer, 2 signal pins (cs, dc)
   // and optional reset pin. cs is required but can be -1 if unused.
-  // While Arduino uses pin numbers, Mbed uses PinNames instead. int8_t rst = -1 in Arduino is the same as PinName rst = NC in Mbed (NC means Not Connected)
-  #if defined(ARDUINO)
   Adafruit_SPITFT(uint16_t w, uint16_t h, SPIClass *spiClass, int8_t cs,
                   int8_t dc, int8_t rst = -1);
-  #elif defined(__MBED__)
-  Adafruit_SPITFT(uint16_t w, uint16_t h, SPI *spiClass, PinName cs,
-                  PinName dc, PinName rst = NC);
-  #endif
 #endif // end !ESP8266
 
   // Parallel constructor: expects width & height (rotation 0), flag
@@ -173,16 +154,13 @@ public:
   // pins (d0, wr, dc), 3 optional pins (cs, rst, rd). 16-bit parallel
   // isn't even fully implemented but the 'wide' flag was added as a
   // required argument to avoid ambiguity with other constructors.
-  // While Arduino uses pin numbers, Mbed uses PinNames instead. int8_t rst = -1 in Arduino is the same as PinName rst = NC in Mbed (NC means Not Connected)
-  #if defined(ARDUINO)
   Adafruit_SPITFT(uint16_t w, uint16_t h, tftBusWidth busWidth, int8_t d0,
                   int8_t wr, int8_t dc, int8_t cs = -1, int8_t rst = -1,
                   int8_t rd = -1);
-  #elif defined(__MBED__)
-  Adafruit_SPITFT(uint16_t w, uint16_t h, tftBusWidth busWidth, PinName d0,
-                  PinName wr, PinName dc, PinName cs = NC, PinName rst = NC,
-                  PinName rd = NC);
-  #endif
+
+  // DESTRUCTOR ----------------------------------------------------------
+
+  ~Adafruit_SPITFT(){};
 
   // CLASS MEMBER FUNCTIONS ----------------------------------------------
 
@@ -218,11 +196,7 @@ public:
   // values defined in SPI.h, which are NOT the same as 0 for SPI_MODE0,
   // 1 for SPI_MODE1, etc...use ONLY the SPI_MODEn defines! Only!
   // Name is outdated (interface may be parallel) but for compatibility:
-  #if defined(ARDUINO)                                                          
   void initSPI(uint32_t freq = 0, uint8_t spiMode = SPI_MODE0);
-  #elif defined(__MBED__)                                                       
-  void initSPI(uint32_t freq = 0, uint8_t spiMode = 0);
-  #endif                                                                        
   void setSPISpeed(uint32_t freq);
   // Chip select and/or hardware SPI transaction start as needed:
   void startWrite(void);
@@ -325,12 +299,7 @@ public:
     *csPort |= csPinMaskSet;
 #endif // end !HAS_PORT_SET_CLR
 #else  // !USE_FAST_PINIO
-    #if defined(ARDUINO)            
     digitalWrite(_cs, HIGH);
-    #elif defined(__MBED__)         
-    // DigitalOut(_cs, 1);
-    digitalWrite(_cs, HIGH);
-    #endif                          
 #endif // end !USE_FAST_PINIO
   }
 
@@ -352,12 +321,7 @@ public:
     *csPort &= csPinMaskClr;
 #endif // end !HAS_PORT_SET_CLR
 #else  // !USE_FAST_PINIO
-    #if defined(ARDUINO)                
     digitalWrite(_cs, LOW);
-    #elif defined(__MBED__)             
-    // DigitalOut(_cs, 0);
-    digitalWrite(_cs, LOW);
-    #endif                              
 #endif // end !USE_FAST_PINIO
   }
 
@@ -376,12 +340,7 @@ public:
     *dcPort |= dcPinMaskSet;
 #endif // end !HAS_PORT_SET_CLR
 #else  // !USE_FAST_PINIO
-    #if defined(ARDUINO)            
     digitalWrite(_dc, HIGH);
-    #elif defined(__MBED__)         
-    // DigitalOut(_dc, 1);
-    digitalWrite(_dc, HIGH);
-    #endif                          
 #endif // end !USE_FAST_PINIO
   }
 
@@ -400,12 +359,7 @@ public:
     *dcPort &= dcPinMaskClr;
 #endif // end !HAS_PORT_SET_CLR
 #else  // !USE_FAST_PINIO
-    #if defined(ARDUINO)            
     digitalWrite(_dc, LOW);
-    #elif defined(__MBED__)         
-    // DigitalOut(_dc, 0);
-    digitalWrite(_dc, LOW);
-    #endif                          
 #endif // end !USE_FAST_PINIO
   }
 
@@ -449,12 +403,7 @@ protected:
   union {
 #endif
     struct {          //   Values specific to HARDWARE SPI:
-      #if defined(ARDUINO)                          
       SPIClass *_spi; ///< SPI class pointer
-      #elif defined(__MBED__)
-      SPIClass *_spimode; ///< SPI class pointer
-      SPI *_spi;
-      #endif
 #if defined(SPI_HAS_TRANSACTION)
       SPISettings settings; ///< SPI transaction settings
 #else
@@ -486,16 +435,9 @@ protected:
       ADAGFX_PORT_t misoPinMask; ///< Bitmask for MISO
 #endif                           // end !KINETISK
 #endif                           // end USE_FAST_PINIO
-      #if defined(ARDUINO)
       int8_t _mosi;              ///< MOSI pin #
       int8_t _miso;              ///< MISO pin #
       int8_t _sck;               ///< SCK pin #
-      // Mbed uses PinNames instead of pin numbers
-      #elif defined(__MBED__)               
-      PinName _mosi;              ///< MOSI pin
-      PinName _miso;              ///< MISO pin
-      PinName _sck;               ///< SCK pin
-      #endif
     } swspi;                     ///< Software SPI values
     struct {                     //   Values specific to 8-bit parallel:
 #if defined(USE_FAST_PINIO)
@@ -537,16 +479,9 @@ protected:
       ADAGFX_PORT_t rdPinMaskClr; ///< Bitmask for read strobe CLEAR (AND)
 #endif                         // end HAS_PORT_SET_CLR
 #endif                         // end USE_FAST_PINIO
-      #if defined(ARDUINO)
       int8_t _d0;              ///< Data pin 0 #
       int8_t _wr;              ///< Write strobe pin #
       int8_t _rd;              ///< Read strobe pin # (or -1)
-      // Mbed uses PinNames instead of pin numbers
-      #elif defined(__MBED__)                       
-      PinName _d0;              ///< Data pin 0
-      PinName _wr;              ///< Write strobe pin
-      PinName _rd;              ///< Read strobe pin (or NC)
-      #endif
       bool wide = 0;           ///< If true, is 16-bit interface
     } tft8;                    ///< Parallel interface settings
 #if defined(__cplusplus) && (__cplusplus >= 201100)
@@ -578,16 +513,9 @@ protected:
 #endif                     // end HAS_PORT_SET_CLR
 #endif                     // end USE_FAST_PINIO
   uint8_t connection;      ///< TFT_HARD_SPI, TFT_SOFT_SPI, etc.
-  #if defined(ARDUINO)
   int8_t _rst;             ///< Reset pin # (or -1)
   int8_t _cs;              ///< Chip select pin # (or -1)
   int8_t _dc;              ///< Data/command pin #
-  // Mbed uses PinNames instead of pin numbers
-  #elif defined(__MBED__)               
-  PinName _rst;             ///< Reset pin (or NC)
-  PinName _cs;              ///< Chip select pin (or NC)
-  PinName _dc;              ///< Data/command pin
-  #endif
 
   int16_t _xstart = 0;          ///< Internal framebuffer X offset
   int16_t _ystart = 0;          ///< Internal framebuffer Y offset

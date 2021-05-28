@@ -41,6 +41,15 @@ extern "C"
 
 #define LED_STATE_ON         0         // State when LED is litted
 
+/*
+ * SPI Interfaces
+ */
+#define SPI_INTERFACES_COUNT 1
+
+#define PIN_SPI_MISO         (42)
+#define PIN_SPI_MOSI         (16)
+#define PIN_SPI_SCK          (14)
+
 
 #ifdef __cplusplus
 }
