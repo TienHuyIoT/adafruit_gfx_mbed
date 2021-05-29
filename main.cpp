@@ -15,6 +15,15 @@
 #include "SPIMode.h" // Arduino SPI library
 #include <pinmap_ex.h>
 
+#include "Fonts/FreeSans24pt7b.h"
+#include "Fonts/FreeSans18pt7b.h"
+#include "Fonts/FreeSans12pt7b.h"
+#include "Fonts/FreeSans9pt7b.h"
+#include "Fonts/SansSerifSize28.h"
+#include "schedule_event_add_32.h"
+#include "schedule_event_add_64.h"
+#include "schedule_event_add_40.h"
+
 Timer t_system;
 
 // ST7789 TFT module connections
@@ -36,6 +45,23 @@ SPI tftspi(TFT_MOSI, TFT_MISO, TFT_SCLK); // mosi, miso, sclk
 /* Using SPI lib Arduino Porting */
 // Initialize Adafruit ST7789 TFT library
 Adafruit_ST7789 tft = Adafruit_ST7789(&SPIMode, TFT_CS, TFT_DC, TFT_RST);
+
+#define COLOR_BLACK0 (rgb_hex565(0x0A0A0A))
+
+Adafruit_GFX_Button gfx_button;
+
+uint16_t rgb_hex565(uint32_t rgb888)
+{
+  uint16_t rgb565;
+  uint16_t r, g, b;
+  r = (rgb888 & 0xFF0000) >> 16;
+  g = (rgb888 & 0xFF00) >> 8;
+  b = rgb888 & 0xFF;
+
+  rgb565 = (uint16_t(r * 31 / 255) << 11) | (uint16_t(g * 63 / 255) << 5) | (uint16_t(b * 31 / 255));
+
+  return rgb565;
+}
 
 float p = 3.1415926;
 
@@ -567,6 +593,156 @@ void tft_gfx_loop()
     ThisThread::sleep_for(500ms);
 }
 
+
+void watch_not_int_duration_page()
+{
+  tft.fillScreen(ST77XX_BLACK);
+
+  tft.setFont(&FreeSans24pt7b);
+  tft.setTextWrap(false);
+  tft.setCursor(40, 100);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setTextSize(2);
+  tft.print("7:00");
+
+  /* Schedule icon */
+  tft.drawCircle(120, 170, 40, COLOR_BLACK0);
+  tft.fillCircle(120, 170, 40, COLOR_BLACK0);
+  
+  tft.drawXBitmap(120 - 32, 170 - 32, schedule_event_add_64_bits, 64, 64, ST77XX_BLUE);
+  
+}
+
+void watch_int_duration_page()
+{
+  tft.fillScreen(ST77XX_BLACK);
+  
+  /* Place A */
+  tft.setFont(&FreeSans18pt7b);
+  tft.setTextWrap(false);
+  tft.setCursor(0, 30);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setTextSize(1);
+  tft.print("Place A");
+
+  /* From To */
+  tft.setFont(&FreeSans12pt7b);
+  tft.setTextWrap(false);
+  tft.setTextColor(COLOR_BLACK0);
+  tft.setTextSize(1);
+
+  tft.setCursor(0, 60);
+  tft.print("From");
+  tft.setCursor(150, 60);
+  tft.print("To");
+
+  /* Time From To */
+  tft.setFont(&FreeSans18pt7b);
+  tft.setTextWrap(false);
+  tft.setTextColor(ST77XX_ORANGE);
+  tft.setTextSize(1);
+
+  tft.setCursor(0, 100);
+  tft.print("8:00");
+  tft.setCursor(150, 100);
+  tft.print("9:30");
+
+  /* Activity */
+  tft.setFont(&FreeSans12pt7b);
+  tft.setTextWrap(false);
+  tft.setTextColor(COLOR_BLACK0);
+  tft.setTextSize(1);
+
+  tft.setCursor(0, 140);
+  tft.print("Activity");
+
+  /* Lorem ipsu... */
+  tft.setFont(&FreeSans18pt7b);
+  tft.setTextWrap(false);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setTextSize(1);
+
+  tft.setCursor(0, 180);
+  tft.print("Lorem ipsu ...");
+}
+
+void watch_event_page()
+{
+  tft.fillScreen(ST77XX_BLACK);
+
+  /* Schedule icon */
+  tft.drawCircle(25, 25, 22, ST77XX_BLUE);
+  tft.fillCircle(25, 25, 22, ST77XX_BLUE);
+  tft.drawXBitmap(25 -20, 25 - 20, schedule_event_add_40_bits, 40, 40, ST77XX_WHITE);
+  
+  /* Schedule */
+  tft.setFont(&SansSerif_plain_28);
+  tft.setTextWrap(false);
+  tft.setCursor(53, 40);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setTextSize(1);
+  tft.print("Schedule");
+
+  /* 10:20 */
+  tft.setFont(&FreeSans9pt7b);
+  tft.setTextWrap(false);
+  tft.setTextColor(COLOR_BLACK0);
+  tft.setTextSize(1);
+  tft.setCursor(195, 40);
+  tft.print("10:30");
+
+  /* In 5 minutes */
+  tft.setFont(&FreeSans12pt7b);
+  tft.setTextWrap(true);
+  tft.setCursor(0, 80);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.setTextSize(1);
+  tft.print("   In 5 minutes, start\n   activity 2 at place B");
+
+  /* Button */
+  gfx_button.initButton(&tft, 120, 170, 200, 60, 
+                        COLOR_BLACK0, COLOR_BLACK0, ST77XX_WHITE,
+                        nullptr, 1);
+  gfx_button.drawButton();
+
+  tft.setFont(&FreeSans18pt7b);
+  tft.setCursor(120 - 30, 170 + 10);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.print("Back");
+}
+
+void watch_full_message_page()
+{
+  tft.fillScreen(ST77XX_BLACK);
+
+  tft.setFont(&FreeSans18pt7b);
+  tft.setTextWrap(true);
+  tft.setCursor(0, 30);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.print("Lorem ipsum\ndolor sit amet,\nconsectetur\nadipiscing elit.");
+}
+
+// bool inverttft = true;
+void watchMeloop() {
+  watch_not_int_duration_page();
+
+  ThisThread::sleep_for(2000ms);
+
+  watch_int_duration_page();
+
+  ThisThread::sleep_for(2000ms);
+
+  watch_event_page();
+
+  ThisThread::sleep_for(2000ms);
+
+  watch_full_message_page();
+
+  ThisThread::sleep_for(2000ms);
+//   inverttft = !inverttft;
+//   tft.invertDisplay(inverttft);
+}
+
 int main()
 {
     t_system.start();
@@ -579,6 +755,7 @@ int main()
     while (true)
     {
         // tft_gfx_loop();
-        tft_lvgl_loop();
+        // tft_lvgl_loop();
+        watchMeloop();
     }
 }
